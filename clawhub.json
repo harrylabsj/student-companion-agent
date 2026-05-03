@@ -1,0 +1,18 @@
+{
+  "name": "student-companion-agent",
+  "version": "0.1.0",
+  "description": "家长用学生陪伴 agent：收集成绩、作业、教学进度和多模态证据，分析多科薄弱知识点，生成教学建议并持续跟踪。",
+  "keywords": [
+    "education",
+    "student",
+    "parent",
+    "homework",
+    "exam",
+    "tracking",
+    "openclaw",
+    "hermes"
+  ],
+  "author": "harrylabsj",
+  "license": "MIT",
+  "repository": "https://github.com/harrylabsj/student-companion-agent"
+}

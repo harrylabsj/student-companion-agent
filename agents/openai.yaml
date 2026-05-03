@@ -1,0 +1,3 @@
+display_name: Student Companion Agent
+short_description: Parent-friendly student progress tracker and learning advisor.
+default_prompt: 帮我记录孩子最近的成绩、作业和教学进度，并生成薄弱点分析、教学建议和跟踪事项。

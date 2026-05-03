@@ -1,0 +1,22 @@
+{
+  "name": "student-companion-agent",
+  "version": "0.1.0",
+  "description": "Parent-facing student companion agent for OpenClaw and Hermes.",
+  "bin": {
+    "student-companion": "scripts/student_companion.py"
+  },
+  "scripts": {
+    "test": "python3 -m unittest discover -s tests && bash scripts/verify.sh",
+    "verify": "bash scripts/verify.sh"
+  },
+  "keywords": [
+    "openclaw",
+    "hermes",
+    "skill",
+    "education",
+    "student",
+    "parent"
+  ],
+  "author": "harrylabsj",
+  "license": "MIT"
+}

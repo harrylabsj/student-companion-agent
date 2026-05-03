@@ -1,0 +1,26 @@
+{
+  "records": [
+    {
+      "type": "score",
+      "student": "小明",
+      "subject": "数学",
+      "title": "周测",
+      "date": "2026-04-29",
+      "score": 16,
+      "max_score": 25,
+      "knowledge_points": "分数应用题,单位换算",
+      "notes": "计算过程能写，但审题不稳"
+    },
+    {
+      "type": "evidence",
+      "student": "小明",
+      "subject": "数学",
+      "title": "老师语音反馈",
+      "date": "2026-04-30",
+      "source_type": "audio",
+      "source_path": "teacher-feedback.ogg",
+      "extracted_text": "老师说：分数应用题需要先画线段图，单位换算要检查单位。",
+      "knowledge_points": "分数应用题,单位换算"
+    }
+  ]
+}

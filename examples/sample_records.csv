@@ -1,0 +1,6 @@
+type,student,subject,title,date,score,max_score,status,unit,knowledge_points,notes
+score,小明,数学,期中考试,2026-04-25,78,100,,,分数应用题;单位换算,应用题失分较多
+score,小明,英语,单元测验,2026-04-26,86,100,,,一般过去时;阅读理解,阅读细节题错 2 题
+homework,小明,数学,周三作业,2026-04-27,,,needs_review,,分数应用题,第 4、6 题需要订正
+homework,小明,语文,阅读打卡,2026-04-27,,,completed,,概括段意,完成较顺
+progress,小明,数学,分数应用题单元,2026-04-28,,,learning,分数应用题单元,分数应用题;单位换算,老师反馈还在学习阶段
