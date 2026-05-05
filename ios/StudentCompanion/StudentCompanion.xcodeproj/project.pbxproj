@@ -1,0 +1,284 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 60;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		20B000000000000000000001 /* StudentCompanionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20A000000000000000000001 /* StudentCompanionApp.swift */; };
+		20B000000000000000000002 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20A000000000000000000002 /* MainTabView.swift */; };
+		20B000000000000000000003 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20A000000000000000000003 /* DesignSystem.swift */; };
+		20B000000000000000000004 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20A000000000000000000004 /* HomeView.swift */; };
+		20B000000000000000000005 /* RecordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20A000000000000000000005 /* RecordView.swift */; };
+		20B000000000000000000006 /* AnalysisView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20A000000000000000000006 /* AnalysisView.swift */; };
+		20B000000000000000000007 /* TextbookView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20A000000000000000000007 /* TextbookView.swift */; };
+		20B000000000000000000008 /* PlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20A000000000000000000008 /* PlanView.swift */; };
+		20B000000000000000000009 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20A000000000000000000009 /* Models.swift */; };
+		20B00000000000000000000A /* WeakPointAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20A00000000000000000000A /* WeakPointAnalyzer.swift */; };
+		20B00000000000000000000B /* StudentCompanionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20A00000000000000000000B /* StudentCompanionStore.swift */; };
+		20B00000000000000000000C /* SeedData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20A00000000000000000000C /* SeedData.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		20A000000000000000000001 /* StudentCompanionApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudentCompanionApp.swift; sourceTree = "<group>"; };
+		20A000000000000000000002 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		20A000000000000000000003 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
+		20A000000000000000000004 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Screens/HomeView.swift; sourceTree = "<group>"; };
+		20A000000000000000000005 /* RecordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Screens/RecordView.swift; sourceTree = "<group>"; };
+		20A000000000000000000006 /* AnalysisView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Screens/AnalysisView.swift; sourceTree = "<group>"; };
+		20A000000000000000000007 /* TextbookView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Screens/TextbookView.swift; sourceTree = "<group>"; };
+		20A000000000000000000008 /* PlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Screens/PlanView.swift; sourceTree = "<group>"; };
+		20A000000000000000000009 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		20A00000000000000000000A /* WeakPointAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeakPointAnalyzer.swift; sourceTree = "<group>"; };
+		20A00000000000000000000B /* StudentCompanionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudentCompanionStore.swift; sourceTree = "<group>"; };
+		20A00000000000000000000C /* SeedData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeedData.swift; sourceTree = "<group>"; };
+		20A00000000000000000000D /* StudentCompanion.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StudentCompanion.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		20C000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				20C000000000000000000002 /* App */,
+				20C000000000000000000003 /* Sources/StudentCompanionCore */,
+				20C000000000000000000004 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		20C000000000000000000002 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				20A000000000000000000001 /* StudentCompanionApp.swift */,
+				20A000000000000000000002 /* MainTabView.swift */,
+				20A000000000000000000003 /* DesignSystem.swift */,
+				20A000000000000000000004 /* HomeView.swift */,
+				20A000000000000000000005 /* RecordView.swift */,
+				20A000000000000000000006 /* AnalysisView.swift */,
+				20A000000000000000000007 /* TextbookView.swift */,
+				20A000000000000000000008 /* PlanView.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		20C000000000000000000003 /* Sources/StudentCompanionCore */ = {
+			isa = PBXGroup;
+			children = (
+				20A000000000000000000009 /* Models.swift */,
+				20A00000000000000000000A /* WeakPointAnalyzer.swift */,
+				20A00000000000000000000B /* StudentCompanionStore.swift */,
+				20A00000000000000000000C /* SeedData.swift */,
+			);
+			path = Sources/StudentCompanionCore;
+			sourceTree = "<group>";
+		};
+		20C000000000000000000004 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				20A00000000000000000000D /* StudentCompanion.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		20D000000000000000000001 /* StudentCompanion */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 20F000000000000000000003 /* Build configuration list for PBXNativeTarget "StudentCompanion" */;
+			buildPhases = (
+				20E000000000000000000001 /* Sources */,
+				20E000000000000000000002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = StudentCompanion;
+			productName = StudentCompanion;
+			productReference = 20A00000000000000000000D /* StudentCompanion.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		20D000000000000000000002 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					20D000000000000000000001 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = 20F000000000000000000001 /* Build configuration list for PBXProject "StudentCompanion" */;
+			compatibilityVersion = "Xcode 15.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 20C000000000000000000001;
+			productRefGroup = 20C000000000000000000004 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				20D000000000000000000001 /* StudentCompanion */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		20E000000000000000000002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		20E000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				20B000000000000000000001 /* StudentCompanionApp.swift in Sources */,
+				20B000000000000000000002 /* MainTabView.swift in Sources */,
+				20B000000000000000000003 /* DesignSystem.swift in Sources */,
+				20B000000000000000000004 /* HomeView.swift in Sources */,
+				20B000000000000000000005 /* RecordView.swift in Sources */,
+				20B000000000000000000006 /* AnalysisView.swift in Sources */,
+				20B000000000000000000007 /* TextbookView.swift in Sources */,
+				20B000000000000000000008 /* PlanView.swift in Sources */,
+				20B000000000000000000009 /* Models.swift in Sources */,
+				20B00000000000000000000A /* WeakPointAnalyzer.swift in Sources */,
+				20B00000000000000000000B /* StudentCompanionStore.swift in Sources */,
+				20B00000000000000000000C /* SeedData.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		20F000000000000000000004 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "学习陪伴官";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.harrylabs.StudentCompanion;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		20F000000000000000000005 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "学习陪伴官";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.harrylabs.StudentCompanion;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		20F000000000000000000006 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		20F000000000000000000007 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		20F000000000000000000001 /* Build configuration list for PBXProject "StudentCompanion" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				20F000000000000000000006 /* Debug */,
+				20F000000000000000000007 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		20F000000000000000000003 /* Build configuration list for PBXNativeTarget "StudentCompanion" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				20F000000000000000000004 /* Debug */,
+				20F000000000000000000005 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 20D000000000000000000002 /* Project object */;
+}
