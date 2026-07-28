@@ -72,6 +72,8 @@ Use `--data /path/to/student-data.json` when you need a project-local or test da
    - Run `analyze` after new data is recorded.
    - Focus on high-severity knowledge points with repeated evidence, not one isolated low score.
    - Explain whether the weakness comes from scores, homework errors, unfinished progress, or teacher notes.
+   - Evidence records (image/audio/file/text extractions) are **qualitative only and never scored**. When an evidence record matches a `subject + knowledge_point` that already has structured score/homework/progress signals, its summary and truncated extracted text are attached to that weak point. Otherwise it appears under `evidence_candidates` (待确认证据) — ask the parent to confirm and re-record it as a structured record instead of inventing a performance number.
+   - Progress status `not_started` means the point has not been taught yet; it carries no capability signal and never produces a weak point. Only `blocked`, `learning`, `reviewing`, and `mastered` feed the analysis.
 
 4. **给教学建议**
    - Separate parent actions from teacher/tutor suggestions.
@@ -111,11 +113,12 @@ python3 scripts/student_companion.py record homework --student NAME --subject SU
 python3 scripts/student_companion.py record progress --student NAME --subject SUBJECT --unit UNIT --status not_started|learning|blocked|reviewing|mastered --knowledge "A,B"
 python3 scripts/student_companion.py record evidence --student NAME --source-type image|audio|file|text --source-path PATH --extracted-text TEXT
 
-# bulk import
+# bulk import (atomic: every row is validated first; any error aborts the
+# whole import with a non-zero exit and writes nothing)
 python3 scripts/student_companion.py import examples/sample_records.csv --student NAME
 python3 scripts/student_companion.py import examples/sample_records.json --student NAME
 
-# analysis and reporting
+# analysis and reporting (--days N covers exactly N calendar dates including today)
 python3 scripts/student_companion.py analyze --student NAME [--days 30] [--format markdown|json]
 python3 scripts/student_companion.py report --student NAME --output weekly.md
 

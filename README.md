@@ -4,17 +4,19 @@
 
 ## Install Locally
 
-OpenClaw:
+OpenClaw（在仓库根目录，即包含本 README.md 的目录下执行）:
 
 ```bash
 mkdir -p ~/.openclaw/workspace/skills
-ln -s "$PWD/student-companion-agent" ~/.openclaw/workspace/skills/student-companion-agent
+ln -sfn "$PWD" ~/.openclaw/workspace/skills/student-companion-agent
 ```
 
-Hermes:
+`ln -sfn` 会安全地替换已存在的同名符号链接；如果目标位置是一个真实目录，请先备份并手动移除后再执行。
+
+Hermes（同样在仓库根目录执行）:
 
 ```bash
-hermes skills publish ./student-companion-agent --to github --repo <owner>/<repo>
+hermes skills publish . --to github --repo <owner>/<repo>
 ```
 
 For local Hermes development, place or symlink this directory under `~/.hermes/skills/education/student-companion-agent`.

@@ -10,14 +10,23 @@ actions.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import csv
 import json
+import math
+import os
 import re
 import sys
+import tempfile
 from collections import defaultdict
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Tuple
+
+if os.name == "nt":  # pragma: no cover - exercised only on Windows
+    import msvcrt
+else:
+    import fcntl
 
 
 APP_NAME = "student-companion-agent"
@@ -60,10 +69,63 @@ def load_store() -> Dict[str, Any]:
 
 
 def save_store(store: Dict[str, Any]) -> None:
+    """Atomically write the store: temp file + flush + fsync + os.replace.
+
+    allow_nan=False keeps NaN/Infinity out of the data file so it always
+    stays standards-compliant JSON.
+    """
     path = data_path()
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as handle:
-        json.dump(store, handle, ensure_ascii=False, indent=2, sort_keys=True)
+    payload = json.dumps(
+        store, ensure_ascii=False, indent=2, sort_keys=True, allow_nan=False
+    )
+    fd, tmp_name = tempfile.mkstemp(
+        prefix=path.name + ".", suffix=".tmp", dir=str(path.parent)
+    )
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(payload)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(tmp_name, path)
+    except BaseException:
+        with contextlib.suppress(OSError):
+            os.unlink(tmp_name)
+        raise
+
+
+@contextlib.contextmanager
+def locked_store() -> Iterable[Dict[str, Any]]:
+    """Cross-process mutex around a full read-modify-write transaction.
+
+    A sibling ``<data>.lock`` file is flocked exclusively (POSIX) or byte-locked
+    (Windows, best-effort) while the store is loaded, mutated by the caller,
+    and written back atomically. This prevents lost updates when two CLI
+    processes write at the same time.
+    """
+    path = data_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    lock_path = path.with_name(path.name + ".lock")
+    with lock_path.open("a+b") as lock_handle:
+        if os.name == "nt":  # pragma: no cover - exercised only on Windows
+            try:
+                lock_handle.seek(0)
+                msvcrt.locking(lock_handle.fileno(), msvcrt.LK_LOCK, 1)
+            except OSError:
+                pass  # best-effort on Windows; atomic write still applies
+        else:
+            fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+        try:
+            store = load_store()
+            yield store
+            save_store(store)
+        finally:
+            if os.name == "nt":  # pragma: no cover - exercised only on Windows
+                with contextlib.suppress(OSError):
+                    lock_handle.seek(0)
+                    msvcrt.locking(lock_handle.fileno(), msvcrt.LK_UNLCK, 1)
+            else:
+                fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)
 
 
 def parse_knowledge(value: Optional[str]) -> List[str]:
@@ -94,6 +156,14 @@ def ensure_student(store: Dict[str, Any], name: str) -> Dict[str, Any]:
     return students[name]
 
 
+def lookup_student(store: Dict[str, Any], name: str) -> Dict[str, Any]:
+    """Read-only lookup: never creates a student, errors like analyze does."""
+    student = store.get("students", {}).get(name)
+    if student is None:
+        raise SystemExit(f"No data for student: {name}")
+    return student
+
+
 def next_id(items: Iterable[Dict[str, Any]]) -> int:
     max_id = 0
     for item in items:
@@ -117,10 +187,16 @@ def parse_date(value: Optional[str]) -> str:
 
 
 def cutoff_date(days: Optional[int]) -> Optional[date]:
-    if not days:
+    """First calendar date inside the window.
+
+    ``--days N`` covers exactly N calendar dates: today plus the previous
+    N-1 days. Non-positive values are rejected for analyze/report.
+    """
+    if days is None:
         return None
-    ordinal = date.today().toordinal() - days
-    return date.fromordinal(ordinal)
+    if days <= 0:
+        raise SystemExit("--days must be a positive integer")
+    return date.fromordinal(date.today().toordinal() - (days - 1))
 
 
 def in_window(record: Dict[str, Any], days: Optional[int]) -> bool:
@@ -136,7 +212,7 @@ def in_window(record: Dict[str, Any], days: Optional[int]) -> bool:
 
 
 def print_json(obj: Any) -> None:
-    print(json.dumps(obj, ensure_ascii=False, indent=2, sort_keys=True))
+    print(json.dumps(obj, ensure_ascii=False, indent=2, sort_keys=True, allow_nan=False))
 
 
 def write_or_print(content: str, output: Optional[str]) -> None:
@@ -147,6 +223,31 @@ def write_or_print(content: str, output: Optional[str]) -> None:
         print(f"Report written: {path}")
     else:
         print(content)
+
+
+def validate_score_values(score: Any, max_score: Any) -> Tuple[float, float]:
+    """Shared CLI/import validation: finite numbers, max > 0, 0 <= score <= max."""
+    try:
+        score_f = float(score)
+        max_f = float(max_score)
+    except (TypeError, ValueError):
+        raise ValueError("score and max_score must be numbers") from None
+    if not math.isfinite(score_f) or not math.isfinite(max_f):
+        raise ValueError("score and max_score must be finite numbers")
+    if max_f <= 0:
+        raise ValueError("max_score must be greater than zero")
+    if score_f < 0:
+        raise ValueError("score must not be negative")
+    if score_f > max_f:
+        raise ValueError("score must not exceed max_score")
+    return score_f, max_f
+
+
+def truncate_text(text: str, limit: int = 160) -> str:
+    text = " ".join((text or "").split())
+    if len(text) <= limit:
+        return text
+    return text[: limit - 1].rstrip() + "…"
 
 
 def normalize_import_record(raw: Dict[str, Any], default_student: Optional[str]) -> Dict[str, Any]:
@@ -173,8 +274,9 @@ def normalize_import_record(raw: Dict[str, Any], default_student: Optional[str])
     }
 
     if record_type == "score":
-        normalized["score"] = float(raw.get("score"))
-        normalized["max_score"] = float(raw.get("max_score") or raw.get("max") or 100)
+        normalized["score"], normalized["max_score"] = validate_score_values(
+            raw.get("score"), raw.get("max_score") or raw.get("max") or 100
+        )
     elif record_type == "homework":
         status = (raw.get("status") or "needs_review").strip()
         if status not in VALID_HOMEWORK_STATUS:
@@ -213,104 +315,101 @@ def append_record(store: Dict[str, Any], student_name: str, record: Dict[str, An
 
 
 def cmd_init(args: argparse.Namespace) -> None:
-    store = load_store()
-    student = ensure_student(store, args.student)
-    profile = student["profile"]
-    if args.grade is not None:
-        profile["grade"] = args.grade
-    if args.school is not None:
-        profile["school"] = args.school
-    if args.goal:
-        goals = profile.setdefault("goals", [])
-        for goal in args.goal:
-            if goal not in goals:
-                goals.append(goal)
-    profile["updated_at"] = now_iso()
-    save_store(store)
+    with locked_store() as store:
+        student = ensure_student(store, args.student)
+        profile = student["profile"]
+        if args.grade is not None:
+            profile["grade"] = args.grade
+        if args.school is not None:
+            profile["school"] = args.school
+        if args.goal:
+            goals = profile.setdefault("goals", [])
+            for goal in args.goal:
+                if goal not in goals:
+                    goals.append(goal)
+        profile["updated_at"] = now_iso()
     print(f"Student initialized: {args.student}")
     print(f"Data file: {data_path()}")
 
 
 def cmd_record_score(args: argparse.Namespace) -> None:
-    if args.max_score <= 0:
-        raise SystemExit("--max-score must be greater than zero")
-    store = load_store()
-    record = append_record(
-        store,
-        args.student,
-        {
-            "type": "score",
-            "subject": args.subject,
-            "title": args.title,
-            "date": parse_date(args.date),
-            "score": args.score,
-            "max_score": args.max_score,
-            "knowledge_points": parse_knowledge(args.knowledge),
-            "notes": args.notes or "",
-        },
-    )
-    save_store(store)
-    accuracy = record["score"] / record["max_score"] * 100
-    print(f"Score recorded #{record['id']}: {args.subject} {accuracy:.1f}%")
+    try:
+        score, max_score = validate_score_values(args.score, args.max_score)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
+    with locked_store() as store:
+        record = append_record(
+            store,
+            args.student,
+            {
+                "type": "score",
+                "subject": args.subject,
+                "title": args.title,
+                "date": parse_date(args.date),
+                "score": score,
+                "max_score": max_score,
+                "knowledge_points": parse_knowledge(args.knowledge),
+                "notes": args.notes or "",
+            },
+        )
+    save_accuracy = record["score"] / record["max_score"] * 100
+    print(f"Score recorded #{record['id']}: {args.subject} {save_accuracy:.1f}%")
 
 
 def cmd_record_homework(args: argparse.Namespace) -> None:
-    store = load_store()
-    record = append_record(
-        store,
-        args.student,
-        {
-            "type": "homework",
-            "subject": args.subject,
-            "title": args.title,
-            "date": parse_date(args.date),
-            "status": args.status,
-            "knowledge_points": parse_knowledge(args.knowledge),
-            "notes": args.notes or "",
-        },
-    )
-    save_store(store)
+    with locked_store() as store:
+        record = append_record(
+            store,
+            args.student,
+            {
+                "type": "homework",
+                "subject": args.subject,
+                "title": args.title,
+                "date": parse_date(args.date),
+                "status": args.status,
+                "knowledge_points": parse_knowledge(args.knowledge),
+                "notes": args.notes or "",
+            },
+        )
     print(f"Homework recorded #{record['id']}: {args.subject} {args.status}")
 
 
 def cmd_record_progress(args: argparse.Namespace) -> None:
-    store = load_store()
-    record = append_record(
-        store,
-        args.student,
-        {
-            "type": "progress",
-            "subject": args.subject,
-            "unit": args.unit,
-            "title": args.unit,
-            "date": parse_date(args.date),
-            "status": args.status,
-            "knowledge_points": parse_knowledge(args.knowledge),
-            "notes": args.notes or "",
-        },
-    )
-    save_store(store)
+    with locked_store() as store:
+        record = append_record(
+            store,
+            args.student,
+            {
+                "type": "progress",
+                "subject": args.subject,
+                "unit": args.unit,
+                "title": args.unit,
+                "date": parse_date(args.date),
+                "status": args.status,
+                "knowledge_points": parse_knowledge(args.knowledge),
+                "notes": args.notes or "",
+            },
+        )
     print(f"Progress recorded #{record['id']}: {args.subject} {args.status}")
 
 
 def cmd_record_evidence(args: argparse.Namespace) -> None:
-    store = load_store()
-    record = append_record(
-        store,
-        args.student,
-        {
-            "type": "evidence",
-            "subject": args.subject or "",
-            "title": args.title or f"{args.source_type} evidence",
-            "date": parse_date(args.date),
-            "source_type": args.source_type,
-            "source_path": args.source_path or "",
-            "extracted_text": args.extracted_text or "",
-            "knowledge_points": parse_knowledge(args.knowledge),
-            "notes": args.notes or "",
-        },
-    )
-    save_store(store)
+    with locked_store() as store:
+        record = append_record(
+            store,
+            args.student,
+            {
+                "type": "evidence",
+                "subject": args.subject or "",
+                "title": args.title or f"{args.source_type} evidence",
+                "date": parse_date(args.date),
+                "source_type": args.source_type,
+                "source_path": args.source_path or "",
+                "extracted_text": args.extracted_text or "",
+                "knowledge_points": parse_knowledge(args.knowledge),
+                "notes": args.notes or "",
+            },
+        )
     print(f"Evidence recorded #{record['id']}: {args.source_type}")
 
 
@@ -345,33 +444,42 @@ def cmd_import(args: argparse.Namespace) -> None:
             }
         ]
 
-    store = load_store()
-    imported = 0
+    # Atomic import: validate every row first; any error aborts the whole
+    # import without touching the store (no silent partial success).
+    normalized_rows: List[Dict[str, Any]] = []
     errors: List[str] = []
     for index, raw_row in enumerate(rows, start=1):
         try:
-            normalized = normalize_import_record(raw_row, args.student)
-            append_record(store, normalized["student"], normalized)
-            imported += 1
+            normalized_rows.append(normalize_import_record(raw_row, args.student))
         except Exception as exc:  # noqa: BLE001 - report all row issues to the parent/operator
             errors.append(f"row {index}: {exc}")
-    save_store(store)
 
-    print(f"Imported {imported} records from {source}")
     if errors:
-        print("Import warnings:")
         for error in errors:
-            print(f"- {error}")
+            print(f"Import error: {error}", file=sys.stderr)
+        raise SystemExit(
+            f"Import aborted: {len(errors)} invalid row(s) in {source}; "
+            "no records were written. Fix the file and retry."
+        )
+
+    with locked_store() as store:
+        for normalized in normalized_rows:
+            append_record(store, normalized["student"], normalized)
+
+    print(f"Imported {len(normalized_rows)} records from {source}")
 
 
 def score_signal(record: Dict[str, Any]) -> Optional[float]:
     try:
         max_score = float(record.get("max_score", 0))
-        if max_score <= 0:
-            return None
-        return max(0.0, min(1.0, float(record.get("score", 0)) / max_score))
+        score = float(record.get("score", 0))
     except (TypeError, ValueError):
         return None
+    if not math.isfinite(max_score) or not math.isfinite(score):
+        return None
+    if max_score <= 0:
+        return None
+    return max(0.0, min(1.0, score / max_score))
 
 
 def homework_signal(status: str) -> float:
@@ -383,13 +491,15 @@ def homework_signal(status: str) -> float:
     }.get(status, 0.55)
 
 
-def progress_signal(status: str) -> float:
+def progress_signal(status: str) -> Optional[float]:
+    # not_started carries no capability signal: the student simply has not
+    # been taught the point yet, so it must not generate a weak point.
     return {
         "mastered": 0.95,
         "reviewing": 0.72,
         "learning": 0.62,
         "blocked": 0.28,
-        "not_started": 0.2,
+        "not_started": None,
     }.get(status, 0.6)
 
 
@@ -410,6 +520,8 @@ def record_evidence_summary(record: Dict[str, Any]) -> str:
 
 
 def analyze_student(store: Dict[str, Any], student_name: str, days: Optional[int]) -> Dict[str, Any]:
+    if days is not None and days <= 0:
+        raise SystemExit("--days must be a positive integer")
     students = store.get("students", {})
     if student_name not in students:
         raise SystemExit(f"No data for student: {student_name}")
@@ -419,17 +531,21 @@ def analyze_student(store: Dict[str, Any], student_name: str, days: Optional[int
     buckets: Dict[tuple, Dict[str, Any]] = {}
     subject_totals: Dict[str, List[float]] = defaultdict(list)
     evidence_count_by_type: Dict[str, int] = defaultdict(int)
+    evidence_records: List[Dict[str, Any]] = []
 
     for record in records:
         record_type = record.get("type", "")
         evidence_count_by_type[record_type] += 1
         subject = record.get("subject") or "未标注科目"
         points = record.get("knowledge_points") or []
+        if record_type == "evidence":
+            # Evidence is qualitative, never scored. Handled in a second
+            # pass so it enriches structured weak points or surfaces as a
+            # pending-confirmation candidate instead of fabricating signals.
+            evidence_records.append(record)
+            continue
         if not points:
-            if record_type in {"score", "homework", "progress"}:
-                points = ["未标注知识点"]
-            else:
-                continue
+            points = ["未标注知识点"]
 
         signal: Optional[float] = None
         if record_type == "score":
@@ -468,6 +584,37 @@ def analyze_student(store: Dict[str, Any], student_name: str, days: Optional[int
             bucket["evidence"].append(record_evidence_summary(record))
             if record.get("notes"):
                 bucket["notes"].append(record["notes"])
+
+    # Second pass: attach evidence to structured weak points, or surface it
+    # as a pending-confirmation candidate when no structured signal exists
+    # for the same subject + knowledge point.
+    evidence_candidates: List[Dict[str, Any]] = []
+    for record in evidence_records:
+        subject = record.get("subject") or "未标注科目"
+        points = record.get("knowledge_points") or []
+        text = truncate_text(record.get("extracted_text", ""))
+        matched = False
+        for point in points:
+            bucket = buckets.get((subject, point))
+            if bucket and bucket["signals"]:
+                entry = record_evidence_summary(record)
+                if text:
+                    entry = f"{entry} — {text}"
+                bucket["evidence"].append(entry)
+                matched = True
+        if not matched:
+            evidence_candidates.append(
+                {
+                    "status": "pending_confirmation",
+                    "subject": subject if record.get("subject") else "",
+                    "knowledge_points": points,
+                    "title": record.get("title") or f"{record.get('source_type')} evidence",
+                    "date": record.get("date", ""),
+                    "source_type": record.get("source_type", ""),
+                    "source_path": record.get("source_path", ""),
+                    "extracted_text": text,
+                }
+            )
 
     weak_points = []
     for bucket in buckets.values():
@@ -529,6 +676,7 @@ def analyze_student(store: Dict[str, Any], student_name: str, days: Optional[int
         "records_by_type": dict(sorted(evidence_count_by_type.items())),
         "subject_summary": subject_summary,
         "weak_points": weak_points,
+        "evidence_candidates": evidence_candidates,
         "open_followups": open_followups,
         "generated_at": now_iso(),
     }
@@ -593,10 +741,28 @@ def build_markdown_analysis(analysis: Dict[str, Any]) -> str:
     else:
         lines.append("- 暂未识别出薄弱点。请补充成绩、作业或进度记录。")
 
+    candidates = analysis.get("evidence_candidates") or []
+    if candidates:
+        lines.extend(["", "## 待确认证据", ""])
+        lines.append(
+            "以下提取内容尚未对应到结构化成绩/作业/进度记录，仅作定性参考，"
+            "请家长确认后用 record score/homework/progress 补录："
+        )
+        for item in candidates[:8]:
+            points = "、".join(item.get("knowledge_points") or []) or "未标注知识点"
+            subject = item.get("subject") or "未标注科目"
+            lines.append(
+                f"- {item.get('date', '')} {subject}「{points}」"
+                f"（{item.get('source_type', '')}：{item.get('title', '')}）"
+            )
+            if item.get("extracted_text"):
+                lines.append(f"  摘录：{item['extracted_text']}")
+
     lines.extend(["", "## 建议", ""])
     if analysis["weak_points"]:
         for item in [suggestion_for(point) for point in analysis["weak_points"][:3]]:
             lines.append(f"- {item['subject']}「{item['knowledge_point']}」：{item['parent_action']}")
+            lines.append(f"  老师/辅导建议：{item['teacher_action']}")
             lines.append(f"  验收信号：{item['success_signal']}")
     else:
         lines.append("- 先补充最近 2-3 次作业或测验，再生成稳定建议。")
@@ -631,27 +797,26 @@ def cmd_report(args: argparse.Namespace) -> None:
 
 
 def cmd_followup_add(args: argparse.Namespace) -> None:
-    store = load_store()
-    student = ensure_student(store, args.student)
-    item = {
-        "id": next_id(student["followups"]),
-        "subject": args.subject,
-        "knowledge_point": args.knowledge,
-        "action": args.action,
-        "due": args.due or "",
-        "owner": args.owner or "parent",
-        "status": "open",
-        "created_at": now_iso(),
-        "completed_at": "",
-    }
-    student["followups"].append(item)
-    save_store(store)
+    with locked_store() as store:
+        student = ensure_student(store, args.student)
+        item = {
+            "id": next_id(student["followups"]),
+            "subject": args.subject,
+            "knowledge_point": args.knowledge,
+            "action": args.action,
+            "due": args.due or "",
+            "owner": args.owner or "parent",
+            "status": "open",
+            "created_at": now_iso(),
+            "completed_at": "",
+        }
+        student["followups"].append(item)
     print(f"Follow-up added #{item['id']}: {item['action']}")
 
 
 def cmd_followup_list(args: argparse.Namespace) -> None:
     store = load_store()
-    student = ensure_student(store, args.student)
+    student = lookup_student(store, args.student)
     items = student.get("followups", [])
     if args.open:
         items = [item for item in items if item.get("status") != "completed"]
@@ -671,21 +836,21 @@ def cmd_followup_list(args: argparse.Namespace) -> None:
 
 
 def cmd_followup_complete(args: argparse.Namespace) -> None:
-    store = load_store()
-    student = ensure_student(store, args.student)
-    for item in student.get("followups", []):
-        if int(item.get("id", 0)) == args.id:
-            item["status"] = "completed"
-            item["completed_at"] = now_iso()
-            save_store(store)
-            print(f"Follow-up completed #{args.id}")
-            return
-    raise SystemExit(f"Follow-up not found: {args.id}")
+    with locked_store() as store:
+        student = lookup_student(store, args.student)
+        for item in student.get("followups", []):
+            if int(item.get("id", 0)) == args.id:
+                item["status"] = "completed"
+                item["completed_at"] = now_iso()
+                break
+        else:
+            raise SystemExit(f"Follow-up not found: {args.id}")
+    print(f"Follow-up completed #{args.id}")
 
 
 def cmd_status(args: argparse.Namespace) -> None:
     store = load_store()
-    student = ensure_student(store, args.student)
+    student = lookup_student(store, args.student)
     profile = student.get("profile", {})
     records = student.get("records", [])
     followups = student.get("followups", [])
