@@ -2,3 +2,6 @@ student-data.json
 reports/
 __pycache__/
 *.pyc
+.superpowers/
+.worktrees/
+.DS_Store
